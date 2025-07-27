@@ -13,7 +13,10 @@ import {
   Package,
   Clock,
   ArrowLeft,
-  Filter
+  Filter,
+  Plus,
+  Minus,
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,10 +28,10 @@ const merchants = [
 ];
 
 const products = [
-  { id: 1, name: "బంగాళాదుంప", nameEn: "Potato", price: 25, unit: "kg", merchantId: 1, category: "వెజిటబుల్స్" },
-  { id: 2, name: "ఉల్లిపాయ", nameEn: "Onion", price: 30, unit: "kg", merchantId: 1, category: "వెజిటబుల్స్" },
-  { id: 3, name: "వేప ఆయిల్", nameEn: "Cooking Oil", price: 150, unit: "ltr", merchantId: 2, category: "ఆయిల్" },
-  { id: 4, name: "అరిసి", nameEn: "Rice", price: 45, unit: "kg", merchantId: 2, category: "గ్రెయిన్స్" }
+  { id: 1, name: "బంగాళాదుంప", nameEn: "Potato", price: 25, unit: "kg", merchantId: 1, category: "వెజిటబుల్స్", image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=300&h=200&fit=crop" },
+  { id: 2, name: "ఉల్లిపాయ", nameEn: "Onion", price: 30, unit: "kg", merchantId: 1, category: "వెజిటబుల్స్", image: "https://images.unsplash.com/photo-1508747703725-719777637510?w=300&h=200&fit=crop" },
+  { id: 3, name: "వేప ఆయిల్", nameEn: "Cooking Oil", price: 150, unit: "ltr", merchantId: 2, category: "ఆయిల్", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300&h=200&fit=crop" },
+  { id: 4, name: "అరిసి", nameEn: "Rice", price: 45, unit: "kg", merchantId: 2, category: "గ్రెయిన్స్", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300&h=200&fit=crop" }
 ];
 
 const VendorDashboard = () => {
@@ -36,6 +39,7 @@ const VendorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [cart, setCart] = useState<{[key: number]: number}>({});
+  const [orders, setOrders] = useState<Array<{id: number, items: {[key: number]: number}, total: number, date: string}>>([]);
   const [activeTab, setActiveTab] = useState("browse");
 
   const categories = ["వెజిటబుల్స్", "ఆయిల్", "గ్రెయిన్స్", "స్పైసెస్", "ఫ్రూట్స్"];
@@ -52,6 +56,44 @@ const VendorDashboard = () => {
       ...prev,
       [productId]: (prev[productId] || 0) + 1
     }));
+  };
+
+  const removeFromCart = (productId: number) => {
+    setCart(prev => {
+      const newCart = { ...prev };
+      if (newCart[productId] > 1) {
+        newCart[productId] -= 1;
+      } else {
+        delete newCart[productId];
+      }
+      return newCart;
+    });
+  };
+
+  const placeOrder = () => {
+    if (Object.keys(cart).length === 0) return;
+    
+    const total = Object.entries(cart).reduce((sum, [productId, quantity]) => {
+      const product = products.find(p => p.id === parseInt(productId));
+      return sum + (product ? product.price * quantity : 0);
+    }, 0);
+
+    const newOrder = {
+      id: Date.now(),
+      items: { ...cart },
+      total,
+      date: new Date().toLocaleDateString('en-IN', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+    setCart({});
+    setActiveTab("orders");
   };
 
   const cartItemsCount = Object.values(cart).reduce((sum, count) => sum + count, 0);
@@ -173,6 +215,14 @@ const VendorDashboard = () => {
                 return (
                   <Card key={product.id} className="hover:shadow-card-hover transition-shadow">
                     <CardContent className="p-4">
+                      <div className="mb-3">
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-full h-32 object-cover rounded-md"
+                        />
+                      </div>
+                      
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h3 className="font-semibold">{product.name}</h3>
@@ -264,14 +314,35 @@ const VendorDashboard = () => {
                     if (!product) return null;
                     
                     return (
-                      <div key={productId} className="flex justify-between items-center py-3 border-b">
-                        <div>
+                      <div key={productId} className="flex items-center gap-4 py-3 border-b">
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                        <div className="flex-1">
                           <h4 className="font-medium">{product.name}</h4>
                           <p className="text-sm text-muted-foreground">₹{product.price}/{product.unit}</p>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeFromCart(product.id)}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="font-medium w-8 text-center">{quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addToCart(product.id)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
                         <div className="text-right">
-                          <p className="font-medium">Qty: {quantity}</p>
-                          <p className="text-sm">₹{product.price * quantity}</p>
+                          <p className="font-medium">₹{product.price * quantity}</p>
                         </div>
                       </div>
                     );
@@ -287,7 +358,10 @@ const VendorDashboard = () => {
                         }, 0)}
                       </span>
                     </div>
-                    <Button className="w-full bg-gradient-primary">
+                    <Button 
+                      className="w-full bg-gradient-primary"
+                      onClick={placeOrder}
+                    >
                       Place COD Order
                     </Button>
                   </div>
@@ -304,13 +378,64 @@ const VendorDashboard = () => {
               <CardTitle>Order History</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No orders yet</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Your order history will appear here
-                </p>
-              </div>
+              {orders.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">No orders yet</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Your order history will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <Card key={order.id} className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-medium">Order #{order.id}</h4>
+                          <p className="text-sm text-muted-foreground">{order.date}</p>
+                        </div>
+                        <Badge variant="outline">COD</Badge>
+                      </div>
+                      
+                      <div className="space-y-2 mb-3">
+                        {Object.entries(order.items).map(([productId, quantity]) => {
+                          const product = products.find(p => p.id === parseInt(productId));
+                          if (!product) return null;
+                          
+                          return (
+                            <div key={productId} className="flex items-center gap-3 text-sm">
+                              <img 
+                                src={product.image} 
+                                alt={product.name}
+                                className="w-8 h-8 object-cover rounded"
+                              />
+                              <span>{product.name}</span>
+                              <span className="text-muted-foreground">x{quantity}</span>
+                              <span className="ml-auto">₹{product.price * quantity}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="flex justify-between items-center pt-3 border-t">
+                        <span className="font-medium">Total: ₹{order.total}</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Reorder functionality
+                            setCart(order.items);
+                            setActiveTab("cart");
+                          }}
+                        >
+                          Reorder
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
