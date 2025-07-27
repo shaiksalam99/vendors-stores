@@ -1,0 +1,322 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  ShoppingCart, 
+  Store, 
+  Star, 
+  MapPin, 
+  Phone,
+  Package,
+  Clock,
+  ArrowLeft,
+  Filter
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+// Demo data
+const merchants = [
+  { id: 1, name: "వెంకట్ స్టోర్స్", nameEn: "Venkat Stores", address: "Vijayawada", rating: 4.5, categories: ["వెజిటబుల్స్", "స్పైసెస్"] },
+  { id: 2, name: "రవి వేల్‌సేల్", nameEn: "Ravi Wholesale", address: "Guntur", rating: 4.2, categories: ["ఆయిల్", "గ్రెయిన్స్"] },
+  { id: 3, name: "సుధా ట్రేడర్స్", nameEn: "Sudha Traders", address: "Kakinada", rating: 4.7, categories: ["వెజిటబుల్స్", "ఫ్రూట్స్"] }
+];
+
+const products = [
+  { id: 1, name: "బంగాళాదుంప", nameEn: "Potato", price: 25, unit: "kg", merchantId: 1, category: "వెజిటబుల్స్" },
+  { id: 2, name: "ఉల్లిపాయ", nameEn: "Onion", price: 30, unit: "kg", merchantId: 1, category: "వెజిటబుల్స్" },
+  { id: 3, name: "వేప ఆయిల్", nameEn: "Cooking Oil", price: 150, unit: "ltr", merchantId: 2, category: "ఆయిల్" },
+  { id: 4, name: "అరిసి", nameEn: "Rice", price: 45, unit: "kg", merchantId: 2, category: "గ్రెయిన్స్" }
+];
+
+const VendorDashboard = () => {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [cart, setCart] = useState<{[key: number]: number}>({});
+  const [activeTab, setActiveTab] = useState("browse");
+
+  const categories = ["వెజిటబుల్స్", "ఆయిల్", "గ్రెయిన్స్", "స్పైసెస్", "ఫ్రూట్స్"];
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.nameEn.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const addToCart = (productId: number) => {
+    setCart(prev => ({
+      ...prev,
+      [productId]: (prev[productId] || 0) + 1
+    }));
+  };
+
+  const cartItemsCount = Object.values(cart).reduce((sum, count) => sum + count, 0);
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-gradient-primary shadow-elegant">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/')}
+                className="text-white hover:bg-white/20"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <h1 className="text-xl font-bold text-white">Vendor Dashboard</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                className="text-white hover:bg-white/20 relative"
+                onClick={() => setActiveTab("cart")}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {cartItemsCount > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-accent text-white">
+                    {cartItemsCount}
+                  </Badge>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Navigation Tabs */}
+        <div className="flex gap-4 mb-6">
+          <Button
+            variant={activeTab === "browse" ? "default" : "outline"}
+            onClick={() => setActiveTab("browse")}
+          >
+            <Store className="w-4 h-4 mr-2" />
+            Browse Products
+          </Button>
+          <Button
+            variant={activeTab === "merchants" ? "default" : "outline"}
+            onClick={() => setActiveTab("merchants")}
+          >
+            <Store className="w-4 h-4 mr-2" />
+            Merchants
+          </Button>
+          <Button
+            variant={activeTab === "orders" ? "default" : "outline"}
+            onClick={() => setActiveTab("orders")}
+          >
+            <Package className="w-4 h-4 mr-2" />
+            Orders
+          </Button>
+          <Button
+            variant={activeTab === "cart" ? "default" : "outline"}
+            onClick={() => setActiveTab("cart")}
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Cart ({cartItemsCount})
+          </Button>
+        </div>
+
+        {/* Browse Products Tab */}
+        {activeTab === "browse" && (
+          <div>
+            {/* Search and Filter */}
+            <div className="flex gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products... / ప్రొడక్ట్స్ వెతకండి..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline">
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+
+            {/* Categories */}
+            <div className="flex gap-2 mb-6 overflow-x-auto">
+              <Button
+                variant={selectedCategory === "" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("")}
+              >
+                All
+              </Button>
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+
+            {/* Products Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(product => {
+                const merchant = merchants.find(m => m.id === product.merchantId);
+                return (
+                  <Card key={product.id} className="hover:shadow-card-hover transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold">{product.name}</h3>
+                          <p className="text-sm text-muted-foreground">{product.nameEn}</p>
+                        </div>
+                        <Badge variant="secondary">{product.category}</Badge>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <p className="text-lg font-bold text-primary">₹{product.price}/{product.unit}</p>
+                        <p className="text-sm text-muted-foreground">by {merchant?.name}</p>
+                      </div>
+
+                      <Button 
+                        className="w-full"
+                        onClick={() => addToCart(product.id)}
+                      >
+                        Add to Cart
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Merchants Tab */}
+        {activeTab === "merchants" && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {merchants.map(merchant => (
+              <Card key={merchant.id} className="hover:shadow-card-hover transition-shadow">
+                <CardContent className="p-6">
+                  <div className="text-center mb-4">
+                    <div className="bg-gradient-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                      <Store className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-lg">{merchant.name}</h3>
+                    <p className="text-sm text-muted-foreground">{merchant.nameEn}</p>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4" />
+                      {merchant.address}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      {merchant.rating} rating
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-sm font-medium mb-2">Categories:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {merchant.categories.map(cat => (
+                        <Badge key={cat} variant="outline" className="text-xs">
+                          {cat}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button className="w-full" variant="outline">
+                    View Products
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Cart Tab */}
+        {activeTab === "cart" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Shopping Cart</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(cart).length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">Your cart is empty</p>
+                </div>
+              ) : (
+                <div>
+                  {Object.entries(cart).map(([productId, quantity]) => {
+                    const product = products.find(p => p.id === parseInt(productId));
+                    if (!product) return null;
+                    
+                    return (
+                      <div key={productId} className="flex justify-between items-center py-3 border-b">
+                        <div>
+                          <h4 className="font-medium">{product.name}</h4>
+                          <p className="text-sm text-muted-foreground">₹{product.price}/{product.unit}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">Qty: {quantity}</p>
+                          <p className="text-sm">₹{product.price * quantity}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  <div className="mt-6 pt-4 border-t">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-lg font-semibold">Total:</span>
+                      <span className="text-lg font-bold text-primary">
+                        ₹{Object.entries(cart).reduce((total, [productId, quantity]) => {
+                          const product = products.find(p => p.id === parseInt(productId));
+                          return total + (product ? product.price * quantity : 0);
+                        }, 0)}
+                      </span>
+                    </div>
+                    <Button className="w-full bg-gradient-primary">
+                      Place COD Order
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Orders Tab */}
+        {activeTab === "orders" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Order History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No orders yet</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Your order history will appear here
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default VendorDashboard;
