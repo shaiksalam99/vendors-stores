@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Search, 
   ShoppingCart, 
@@ -41,6 +42,7 @@ const VendorDashboard = () => {
   const [cart, setCart] = useState<{[key: number]: number}>({});
   const [orders, setOrders] = useState<Array<{id: number, items: {[key: number]: number}, total: number, date: string}>>([]);
   const [activeTab, setActiveTab] = useState("browse");
+  const [selectedMerchant, setSelectedMerchant] = useState<number | null>(null);
 
   const categories = ["వెజిటబుల్స్", "ఆయిల్", "గ్రెయిన్స్", "స్పైసెస్", "ఫ్రూట్స్"];
 
@@ -286,9 +288,86 @@ const VendorDashboard = () => {
                     </div>
                   </div>
 
-                  <Button className="w-full" variant="outline">
-                    View Products
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full" variant="outline">
+                        View Details
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Merchant Details</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="text-center">
+                          <div className="bg-gradient-primary rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-3">
+                            <Store className="w-10 h-10 text-white" />
+                          </div>
+                          <h3 className="text-xl font-bold">{merchant.name}</h3>
+                          <p className="text-muted-foreground">{merchant.nameEn}</p>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <MapPin className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="font-medium">Location</p>
+                              <p className="text-sm text-muted-foreground">{merchant.address}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                            <div>
+                              <p className="font-medium">Rating</p>
+                              <p className="text-sm text-muted-foreground">{merchant.rating} out of 5</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-3">
+                            <Package className="w-5 h-5 text-primary mt-0.5" />
+                            <div>
+                              <p className="font-medium">Categories</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {merchant.categories.map(cat => (
+                                  <Badge key={cat} variant="secondary" className="text-xs">
+                                    {cat}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="pt-4 border-t">
+                          <h4 className="font-medium mb-3">Available Products</h4>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {products
+                              .filter(product => product.merchantId === merchant.id)
+                              .map(product => (
+                                <div key={product.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded">
+                                  <img 
+                                    src={product.image} 
+                                    alt={product.name}
+                                    className="w-10 h-10 object-cover rounded"
+                                  />
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm">{product.name}</p>
+                                    <p className="text-xs text-muted-foreground">₹{product.price}/{product.unit}</p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => addToCart(product.id)}
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </CardContent>
               </Card>
             ))}
